@@ -7,220 +7,383 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
-      font-family: sans-serif;
-      background: var(--tg-theme-bg-color, #fff);
-      color: var(--tg-theme-text-color, #000);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--tg-theme-bg-color, #ffffff);
+      color: var(--tg-theme-text-color, #000000);
       display: flex;
       align-items: center;
       justify-content: center;
       min-height: 100vh;
       padding: 24px;
     }
-    .card { width: 100%; max-width: 380px; text-align: center; }
-    h2 { font-size: 20px; margin-bottom: 8px; }
-    .subtitle { font-size: 14px; opacity: 0.6; margin-bottom: 28px; }
+
+    .card {
+      width: 100%;
+      max-width: 380px;
+      text-align: center;
+    }
+
+    h2 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      opacity: 0.55;
+      margin-bottom: 28px;
+      line-height: 1.4;
+    }
+
+    /* Timer */
     .timer {
-      font-size: 56px;
-      font-weight: bold;
+      font-size: 64px;
+      font-weight: 800;
       color: var(--tg-theme-button-color, #2b5ce6);
       margin-bottom: 6px;
-      min-height: 70px;
+      min-height: 76px;
       line-height: 1;
+      letter-spacing: -2px;
     }
+
     .status {
       font-size: 13px;
-      opacity: 0.6;
+      opacity: 0.55;
       margin-bottom: 28px;
       min-height: 18px;
+      line-height: 1.4;
     }
+
+    /* Buttons */
     .btn {
       width: 100%;
-      padding: 14px;
+      padding: 15px;
       border: none;
-      border-radius: 10px;
+      border-radius: 12px;
       font-size: 16px;
       font-weight: 600;
       cursor: pointer;
       background: var(--tg-theme-button-color, #2b5ce6);
-      color: var(--tg-theme-button-text-color, #fff);
-      transition: opacity 0.2s;
+      color: var(--tg-theme-button-text-color, #ffffff);
+      transition: opacity 0.2s, transform 0.1s;
       margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
     }
-    .btn:disabled { opacity: 0.35; cursor: not-allowed; }
-    .btn-outline {
+
+    .btn:active:not(:disabled) {
+      transform: scale(0.98);
+    }
+
+    .btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
       width: 100%;
-      padding: 14px;
+      padding: 15px;
       border: 2px solid var(--tg-theme-button-color, #2b5ce6);
-      border-radius: 10px;
+      border-radius: 12px;
       font-size: 16px;
       font-weight: 600;
       cursor: pointer;
       background: transparent;
       color: var(--tg-theme-button-color, #2b5ce6);
       margin-bottom: 20px;
+      transition: opacity 0.2s;
     }
+
+    /* Steps */
+    .steps {
+      margin-bottom: 24px;
+    }
+
     .step {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
       background: var(--tg-theme-secondary-bg-color, #f5f5f5);
-      border-radius: 10px;
-      padding: 10px 14px;
+      border-radius: 12px;
+      padding: 12px 14px;
       margin-bottom: 8px;
       text-align: left;
       font-size: 13px;
+      line-height: 1.4;
     }
+
     .step-num {
-      width: 24px;
-      height: 24px;
+      width: 26px;
+      height: 26px;
       border-radius: 50%;
       background: var(--tg-theme-button-color, #2b5ce6);
-      color: var(--tg-theme-button-text-color, #fff);
+      color: var(--tg-theme-button-text-color, #ffffff);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-weight: bold;
+      font-weight: 700;
       font-size: 13px;
       flex-shrink: 0;
     }
-    .step-num.done { background: #22c55e; }
-    .note { font-size: 11px; opacity: 0.4; margin-top: 16px; }
 
+    .step-num.done {
+      background: #22c55e;
+    }
+
+    /* Progress bar */
+    .progress-wrap {
+      background: var(--tg-theme-secondary-bg-color, #f0f0f0);
+      border-radius: 999px;
+      height: 6px;
+      margin-bottom: 28px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: var(--tg-theme-button-color, #2b5ce6);
+      border-radius: 999px;
+      transition: width 1s linear;
+      width: 0%;
+    }
+
+    /* Note */
+    .note {
+      font-size: 11px;
+      opacity: 0.35;
+      margin-top: 14px;
+      line-height: 1.4;
+    }
+
+    /* Error box */
+    .error-box {
+      background: #fee2e2;
+      color: #991b1b;
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: none;
+      text-align: left;
+      line-height: 1.4;
+    }
+
+    /* Phase toggle */
     .phase { display: none; }
     .phase.active { display: block; }
+
+    /* Success icon animation */
+    @keyframes popIn {
+      0%   { transform: scale(0.5); opacity: 0; }
+      80%  { transform: scale(1.1); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .success-icon {
+      font-size: 64px;
+      margin-bottom: 6px;
+      animation: popIn 0.4s ease forwards;
+    }
   </style>
 </head>
 <body>
 <div class="card">
 
-  <!-- FASE 1: Belum buka iklan -->
+  <!-- ── FASE 1: Instruksi ── -->
   <div class="phase active" id="phase1">
-    <h2>Langkah Ambil File</h2>
-    <p class="subtitle">Ikuti langkah berikut untuk mendapatkan file</p>
+    <h2>📥 Ambil File</h2>
+    <p class="subtitle">Ikuti 3 langkah berikut untuk mendapatkan file</p>
 
-    <div class="step">
-      <div class="step-num">1</div>
-      <div>Klik tombol di bawah untuk membuka iklan</div>
-    </div>
-    <div class="step">
-      <div class="step-num">2</div>
-      <div>Tunggu timer countdown selesai</div>
-    </div>
-    <div class="step">
-      <div class="step-num">3</div>
-      <div>Klik "Ambil File" untuk mendapatkan file</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div>Klik tombol di bawah untuk membuka iklan</div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div>Tunggu timer countdown selesai</div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div>Klik <strong>Ambil File</strong> untuk menerima file di chat</div>
+      </div>
     </div>
 
-    <br>
-    <button class="btn" id="btn-open-ad">Buka Iklan Sekarang</button>
-    <p class="note">Proses ini mendukung konten gratis</p>
+    <button class="btn" id="btn-open-ad">🚀 Buka Iklan Sekarang</button>
+    <p class="note">Proses ini mendukung tersedianya konten gratis</p>
   </div>
 
-  <!-- FASE 2: Timer berjalan -->
+  <!-- ── FASE 2: Timer ── -->
   <div class="phase" id="phase2">
-    <h2>Tunggu Sebentar</h2>
-    <p class="subtitle">Jangan tutup halaman ini</p>
+    <h2>⏳ Tunggu Sebentar</h2>
+    <p class="subtitle">Jangan tutup halaman ini sampai timer selesai</p>
+
     <div class="timer" id="timer">--</div>
-    <div class="status" id="status">Timer berjalan...</div>
-    <button class="btn" id="btn-claim" disabled>Tunggu timer selesai...</button>
-    <p class="note">Proses ini mendukung konten gratis</p>
+    <div class="progress-wrap">
+      <div class="progress-bar" id="progress-bar"></div>
+    </div>
+
+    <div class="status" id="status">Timer sedang berjalan...</div>
+    <div class="error-box" id="error-box"></div>
+
+    <button class="btn" id="btn-claim" disabled>⏳ Tunggu timer selesai...</button>
+    <p class="note">Proses ini mendukung tersedianya konten gratis</p>
   </div>
 
-  <!-- FASE 3: Selesai -->
+  <!-- ── FASE 3: Sukses ── -->
   <div class="phase" id="phase3">
-    <h2>Verifikasi Berhasil!</h2>
-    <p class="subtitle">File sedang dikirim ke chat kamu</p>
-    <div class="timer">✅</div>
-    <div class="status">Kembali ke Telegram untuk melihat file</div>
-    <button class="btn" id="btn-back">Kembali ke Telegram</button>
-    <p class="note">Proses ini mendukung konten gratis</p>
+    <div class="success-icon">✅</div>
+    <h2>File Dikirim!</h2>
+    <p class="subtitle">Kembali ke Telegram untuk melihat file yang sudah dikirim ke chat kamu</p>
+    <br>
+    <button class="btn" id="btn-back">← Kembali ke Telegram</button>
+    <p class="note">Terima kasih sudah mendukung konten gratis</p>
   </div>
 
 </div>
+
 <script>
   const tg = window.Telegram.WebApp;
   tg.ready();
   tg.expand();
 
-  const params = new URLSearchParams(location.search);
-  const code = params.get('code');
-  const wait = parseInt(params.get('wait')) || 20;
-  const adUrl = params.get('ad') ? decodeURIComponent(params.get('ad')) : null;
+  // ── Parse params ──────────────────────────────────────────────────────────
+  const params     = new URLSearchParams(location.search);
+  const code       = params.get('code');
+  const wait       = parseInt(params.get('wait')) || 20;
+  const adUrl      = params.get('ad')      ? decodeURIComponent(params.get('ad'))      : null;
+  const backendUrl = params.get('backend') ? decodeURIComponent(params.get('backend')) : null;
 
-  // Elemen
-  const phase1 = document.getElementById('phase1');
-  const phase2 = document.getElementById('phase2');
-  const phase3 = document.getElementById('phase3');
-  const timerEl = document.getElementById('timer');
-  const statusEl = document.getElementById('status');
-  const btnOpenAd = document.getElementById('btn-open-ad');
-  const btnClaim = document.getElementById('btn-claim');
-  const btnBack = document.getElementById('btn-back');
+  // ── Elemen ────────────────────────────────────────────────────────────────
+  const phase1     = document.getElementById('phase1');
+  const phase2     = document.getElementById('phase2');
+  const phase3     = document.getElementById('phase3');
+  const timerEl    = document.getElementById('timer');
+  const statusEl   = document.getElementById('status');
+  const progressEl = document.getElementById('progress-bar');
+  const errorBox   = document.getElementById('error-box');
+  const btnOpenAd  = document.getElementById('btn-open-ad');
+  const btnClaim   = document.getElementById('btn-claim');
+  const btnBack    = document.getElementById('btn-back');
 
+  // ── Utils ─────────────────────────────────────────────────────────────────
   function showPhase(n) {
-    phase1.classList.remove('active');
-    phase2.classList.remove('active');
-    phase3.classList.remove('active');
+    [phase1, phase2, phase3].forEach(el => el.classList.remove('active'));
     document.getElementById('phase' + n).classList.add('active');
   }
 
+  function showError(msg) {
+    errorBox.textContent = '❌ ' + msg;
+    errorBox.style.display = 'block';
+  }
+
+  function hideError() {
+    errorBox.style.display = 'none';
+  }
+
+  // ── Validasi awal ─────────────────────────────────────────────────────────
   if (!code) {
-    btnOpenAd.textContent = 'Parameter tidak valid';
+    btnOpenAd.textContent = '❌ Parameter tidak valid';
     btnOpenAd.disabled = true;
   }
 
-  // Fase 1: User klik buka iklan
+  if (!backendUrl) {
+    console.warn('Backend URL tidak tersedia — klaim mungkin gagal.');
+  }
+
+  // ── Fase 1: Buka iklan ────────────────────────────────────────────────────
   btnOpenAd.addEventListener('click', () => {
-    // Buka iklan
     if (adUrl) {
       tg.openLink(adUrl);
     }
-
-    // Pindah ke fase 2 dan mulai timer
     showPhase(2);
     startTimer();
   });
 
-  // Timer countdown
+  // ── Timer countdown ───────────────────────────────────────────────────────
   function startTimer() {
     let remaining = wait;
     timerEl.textContent = remaining + 's';
+    progressEl.style.width = '0%';
+
+    // Paksa reflow agar transisi CSS berjalan
+    progressEl.getBoundingClientRect();
+    progressEl.style.width = '100%';
 
     const interval = setInterval(() => {
       remaining--;
-      timerEl.textContent = remaining + 's';
+      timerEl.textContent = remaining > 0 ? remaining + 's' : '🎉';
 
       if (remaining <= 0) {
         clearInterval(interval);
-        timerEl.textContent = '🎉';
-        statusEl.textContent = 'Selesai! Klik tombol untuk mengambil file.';
+        statusEl.textContent = 'Timer selesai! Klik tombol untuk mengambil file.';
         btnClaim.disabled = false;
-        btnClaim.textContent = 'Ambil File Sekarang';
+        btnClaim.textContent = '📥 Ambil File Sekarang';
       }
     }, 1000);
   }
 
-  // Fase 2: User klik ambil file
-  btnClaim.addEventListener('click', () => {
+  // ── Fase 2: Klaim file ────────────────────────────────────────────────────
+  btnClaim.addEventListener('click', async () => {
     if (btnClaim.disabled) return;
+
+    hideError();
     btnClaim.disabled = true;
-    btnClaim.textContent = 'Memproses...';
-    statusEl.textContent = 'Mengirim permintaan...';
+    btnClaim.textContent = '⏳ Memproses...';
+    statusEl.textContent = 'Mengirim permintaan ke server...';
 
-  try {
-    // Coba sendData dulu
-    tg.sendData(JSON.stringify({ action: 'claim', code: code }));
-  } catch (e) {
-    // Fallback: gunakan deep link /start
-    tg.openTelegramLink(`https://t.me/${tg.initDataUnsafe?.bot_username || ''}?start=${code}`);
-  }
+    // Ambil user ID dari Telegram WebApp
+    const userId = tg.initDataUnsafe?.user?.id;
 
-    // Pindah ke fase 3
-    showPhase(3);
+    if (!userId) {
+      showError('Tidak bisa mendapatkan ID pengguna dari Telegram. Coba tutup dan buka lagi.');
+      btnClaim.disabled = false;
+      btnClaim.textContent = '📥 Ambil File Sekarang';
+      return;
+    }
+
+    if (!backendUrl) {
+      showError('Konfigurasi backend tidak tersedia. Hubungi admin.');
+      btnClaim.disabled = false;
+      btnClaim.textContent = '📥 Coba Lagi';
+      return;
+    }
+
+    try {
+      const response = await fetch(`${backendUrl}/claim`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: code, user_id: userId })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result.ok) {
+        showPhase(3);
+      } else {
+        showError(result.error || 'Terjadi kesalahan. Coba lagi.');
+        btnClaim.disabled = false;
+        btnClaim.textContent = '📥 Coba Lagi';
+        statusEl.textContent = '';
+      }
+    } catch (err) {
+      console.error('Claim error:', err);
+      showError('Koneksi ke server gagal. Periksa internet kamu lalu coba lagi.');
+      btnClaim.disabled = false;
+      btnClaim.textContent = '📥 Coba Lagi';
+      statusEl.textContent = '';
+    }
   });
 
-  // Fase 3: Kembali ke Telegram
+  // ── Fase 3: Kembali ke Telegram ───────────────────────────────────────────
   btnBack.addEventListener('click', () => {
     tg.close();
   });
