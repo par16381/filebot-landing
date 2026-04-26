@@ -38,7 +38,6 @@
       line-height: 1.4;
     }
 
-    /* Timer */
     .timer {
       font-size: 64px;
       font-weight: 800;
@@ -57,7 +56,6 @@
       line-height: 1.4;
     }
 
-    /* Buttons */
     .btn {
       width: 100%;
       padding: 15px;
@@ -76,33 +74,10 @@
       gap: 8px;
     }
 
-    .btn:active:not(:disabled) {
-      transform: scale(0.98);
-    }
+    .btn:active:not(:disabled) { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
-    .btn:disabled {
-      opacity: 0.35;
-      cursor: not-allowed;
-    }
-
-    .btn-secondary {
-      width: 100%;
-      padding: 15px;
-      border: 2px solid var(--tg-theme-button-color, #2b5ce6);
-      border-radius: 12px;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      background: transparent;
-      color: var(--tg-theme-button-color, #2b5ce6);
-      margin-bottom: 20px;
-      transition: opacity 0.2s;
-    }
-
-    /* Steps */
-    .steps {
-      margin-bottom: 24px;
-    }
+    .steps { margin-bottom: 24px; }
 
     .step {
       display: flex;
@@ -131,11 +106,6 @@
       flex-shrink: 0;
     }
 
-    .step-num.done {
-      background: #22c55e;
-    }
-
-    /* Progress bar */
     .progress-wrap {
       background: var(--tg-theme-secondary-bg-color, #f0f0f0);
       border-radius: 999px;
@@ -148,11 +118,9 @@
       height: 100%;
       background: var(--tg-theme-button-color, #2b5ce6);
       border-radius: 999px;
-      transition: width 1s linear;
       width: 0%;
     }
 
-    /* Note */
     .note {
       font-size: 11px;
       opacity: 0.35;
@@ -160,7 +128,6 @@
       line-height: 1.4;
     }
 
-    /* Error box */
     .error-box {
       background: #fee2e2;
       color: #991b1b;
@@ -173,11 +140,9 @@
       line-height: 1.4;
     }
 
-    /* Phase toggle */
     .phase { display: none; }
     .phase.active { display: block; }
 
-    /* Success icon animation */
     @keyframes popIn {
       0%   { transform: scale(0.5); opacity: 0; }
       80%  { transform: scale(1.1); }
@@ -193,11 +158,10 @@
 <body>
 <div class="card">
 
-  <!-- ── FASE 1: Instruksi ── -->
+  <!-- FASE 1 -->
   <div class="phase active" id="phase1">
     <h2>📥 Ambil File</h2>
     <p class="subtitle">Ikuti 3 langkah berikut untuk mendapatkan file</p>
-
     <div class="steps">
       <div class="step">
         <div class="step-num">1</div>
@@ -212,29 +176,25 @@
         <div>Klik <strong>Ambil File</strong> untuk menerima file di chat</div>
       </div>
     </div>
-
     <button class="btn" id="btn-open-ad">🚀 Buka Iklan Sekarang</button>
     <p class="note">Proses ini mendukung tersedianya konten gratis</p>
   </div>
 
-  <!-- ── FASE 2: Timer ── -->
+  <!-- FASE 2 -->
   <div class="phase" id="phase2">
     <h2>⏳ Tunggu Sebentar</h2>
     <p class="subtitle">Jangan tutup halaman ini sampai timer selesai</p>
-
     <div class="timer" id="timer">--</div>
     <div class="progress-wrap">
       <div class="progress-bar" id="progress-bar"></div>
     </div>
-
     <div class="status" id="status">Timer sedang berjalan...</div>
     <div class="error-box" id="error-box"></div>
-
     <button class="btn" id="btn-claim" disabled>⏳ Tunggu timer selesai...</button>
     <p class="note">Proses ini mendukung tersedianya konten gratis</p>
   </div>
 
-  <!-- ── FASE 3: Sukses ── -->
+  <!-- FASE 3 -->
   <div class="phase" id="phase3">
     <div class="success-icon">✅</div>
     <h2>File Dikirim!</h2>
@@ -245,23 +205,22 @@
   </div>
 
 </div>
-
 <script>
+  // =====================================================================
+  // GANTI URL INI DENGAN URL RAILWAY BOT KAMU
+  // Cek di Railway → Settings → Networking → Public Domain
+  const BACKEND_URL = "https://bot-ujicoba-production.up.railway.app";
+  // =====================================================================
+
   const tg = window.Telegram.WebApp;
   tg.ready();
   tg.expand();
 
-  // ── Parse params ──────────────────────────────────────────────────────────
-  const params     = new URLSearchParams(location.search);
-  const code       = params.get('code');
-  const wait       = parseInt(params.get('wait')) || 20;
-  const adUrl      = params.get('ad')      ? decodeURIComponent(params.get('ad'))      : null;
-  const backendUrl = params.get('backend') ? decodeURIComponent(params.get('backend')) : null;
+  const params = new URLSearchParams(location.search);
+  const code   = params.get('code');
+  const wait   = parseInt(params.get('wait')) || 20;
+  const adUrl  = params.get('ad') ? decodeURIComponent(params.get('ad')) : null;
 
-  // ── Elemen ────────────────────────────────────────────────────────────────
-  const phase1     = document.getElementById('phase1');
-  const phase2     = document.getElementById('phase2');
-  const phase3     = document.getElementById('phase3');
   const timerEl    = document.getElementById('timer');
   const statusEl   = document.getElementById('status');
   const progressEl = document.getElementById('progress-bar');
@@ -270,9 +229,8 @@
   const btnClaim   = document.getElementById('btn-claim');
   const btnBack    = document.getElementById('btn-back');
 
-  // ── Utils ─────────────────────────────────────────────────────────────────
   function showPhase(n) {
-    [phase1, phase2, phase3].forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.phase').forEach(el => el.classList.remove('active'));
     document.getElementById('phase' + n).classList.add('active');
   }
 
@@ -285,39 +243,37 @@
     errorBox.style.display = 'none';
   }
 
-  // ── Validasi awal ─────────────────────────────────────────────────────────
+  // Validasi code
   if (!code) {
-    btnOpenAd.textContent = '❌ Parameter tidak valid';
+    btnOpenAd.textContent = '❌ Link tidak valid';
     btnOpenAd.disabled = true;
   }
 
-  if (!backendUrl) {
-    console.warn('Backend URL tidak tersedia — klaim mungkin gagal.');
-  }
-
-  // ── Fase 1: Buka iklan ────────────────────────────────────────────────────
+  // ── Fase 1: Buka iklan ─────────────────────────────────────────────────
   btnOpenAd.addEventListener('click', () => {
-    if (adUrl) {
-      tg.openLink(adUrl);
-    }
+    if (adUrl) tg.openLink(adUrl);
     showPhase(2);
     startTimer();
   });
 
-  // ── Timer countdown ───────────────────────────────────────────────────────
+  // ── Timer countdown ────────────────────────────────────────────────────
   function startTimer() {
     let remaining = wait;
     timerEl.textContent = remaining + 's';
-    progressEl.style.width = '0%';
 
-    // Paksa reflow agar transisi CSS berjalan
-    progressEl.getBoundingClientRect();
-    progressEl.style.width = '100%';
+    // Animasi progress bar
+    progressEl.style.transition = 'none';
+    progressEl.style.width = '0%';
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        progressEl.style.transition = `width ${wait}s linear`;
+        progressEl.style.width = '100%';
+      });
+    });
 
     const interval = setInterval(() => {
       remaining--;
       timerEl.textContent = remaining > 0 ? remaining + 's' : '🎉';
-
       if (remaining <= 0) {
         clearInterval(interval);
         statusEl.textContent = 'Timer selesai! Klik tombol untuk mengambil file.';
@@ -327,41 +283,34 @@
     }, 1000);
   }
 
-  // ── Fase 2: Klaim file ────────────────────────────────────────────────────
+  // ── Fase 2: Klaim file ─────────────────────────────────────────────────
   btnClaim.addEventListener('click', async () => {
     if (btnClaim.disabled) return;
 
     hideError();
     btnClaim.disabled = true;
     btnClaim.textContent = '⏳ Memproses...';
-    statusEl.textContent = 'Mengirim permintaan ke server...';
+    statusEl.textContent = 'Menghubungi server...';
 
-    // Ambil user ID dari Telegram WebApp
     const userId = tg.initDataUnsafe?.user?.id;
 
     if (!userId) {
-      showError('Tidak bisa mendapatkan ID pengguna dari Telegram. Coba tutup dan buka lagi.');
-      btnClaim.disabled = false;
-      btnClaim.textContent = '📥 Ambil File Sekarang';
-      return;
-    }
-
-    if (!backendUrl) {
-      showError('Konfigurasi backend tidak tersedia. Hubungi admin.');
+      showError('Gagal mendapatkan ID pengguna. Tutup dan buka kembali WebApp ini.');
       btnClaim.disabled = false;
       btnClaim.textContent = '📥 Coba Lagi';
+      statusEl.textContent = '';
       return;
     }
 
     try {
-      const response = await fetch(`${backendUrl}/claim`, {
+      const response = await fetch(`${BACKEND_URL}/claim`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code: code, user_id: userId })
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+        throw new Error(`Server error: ${response.status}`);
       }
 
       const result = await response.json();
@@ -369,24 +318,22 @@
       if (result.ok) {
         showPhase(3);
       } else {
-        showError(result.error || 'Terjadi kesalahan. Coba lagi.');
+        showError(result.error || 'Terjadi kesalahan. Silakan coba lagi.');
         btnClaim.disabled = false;
         btnClaim.textContent = '📥 Coba Lagi';
         statusEl.textContent = '';
       }
     } catch (err) {
       console.error('Claim error:', err);
-      showError('Koneksi ke server gagal. Periksa internet kamu lalu coba lagi.');
+      showError('Gagal terhubung ke server. Periksa koneksi internet kamu. (' + err.message + ')');
       btnClaim.disabled = false;
       btnClaim.textContent = '📥 Coba Lagi';
       statusEl.textContent = '';
     }
   });
 
-  // ── Fase 3: Kembali ke Telegram ───────────────────────────────────────────
-  btnBack.addEventListener('click', () => {
-    tg.close();
-  });
+  // ── Fase 3: Kembali ────────────────────────────────────────────────────
+  btnBack.addEventListener('click', () => tg.close());
 </script>
 </body>
 </html>
