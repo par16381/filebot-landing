@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ambil File</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: sans-serif;
+      background: var(--tg-theme-bg-color, #fff);
+      color: var(--tg-theme-text-color, #000);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 24px;
+    }
+    .card {
+      width: 100%;
+      max-width: 380px;
+      text-align: center;
+    }
+    h2 { font-size: 20px; margin-bottom: 8px; }
+    p { font-size: 14px; opacity: 0.7; margin-bottom: 24px; }
+    .timer {
+      font-size: 52px;
+      font-weight: bold;
+      color: var(--tg-theme-button-color, #2b5ce6);
+      margin-bottom: 8px;
+    }
+    .status { font-size: 13px; opacity: 0.6; margin-bottom: 28px; min-height: 20px; }
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      background: var(--tg-theme-button-color, #2b5ce6);
+      color: var(--tg-theme-button-text-color, #fff);
+      transition: opacity 0.2s;
+    }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn.ready { animation: pulse 1s ease-in-out infinite; }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.75; }
+    }
+    .ad-note {
+      font-size: 12px;
+      opacity: 0.5;
+      margin-top: 16px;
+    }
+  </style>
+</head>
+<body>
+<div class="card">
+  <h2>Ambil File Kamu</h2>
+  <p>Iklan akan terbuka otomatis.<br>Tunggu timer selesai untuk mengambil file.</p>
+  <div class="timer" id="timer">--</div>
+  <div class="status" id="status">Memuat...</div>
+  <button class="btn" id="btn" disabled>Menunggu...</button>
+  <p class="ad-note">Proses ini mendukung konten gratis</p>
+</div>
+
+<script>
+  const tg = window.Telegram.WebApp;
+  tg.ready();
+  tg.expand();
+
+  const params = new URLSearchParams(location.search);
+  const code = params.get('code');
+  const wait = parseInt(params.get('wait')) || 20;
+
+  const timerEl = document.getElementById('timer');
+  const statusEl = document.getElementById('status');
+  const btn = document.getElementById('btn');
+
+  if (!code) {
+    timerEl.textContent = '❌';
+    statusEl.textContent = 'Parameter tidak valid.';
+  } else {
+    // Buka iklan di browser eksternal
+    const adUrl = params.get('ad');
+    if (adUrl) {
+      setTimeout(() => {
+        tg.openLink(decodeURIComponent(adUrl));
+      }, 800);
+    }
+
+    statusEl.textContent = 'Iklan sedang dibuka...';
+
+    let remaining = wait;
+    timerEl.textContent = remaining + 's';
+
+    const interval = setInterval(() => {
+      remaining--;
+      timerEl.textContent = remaining + 's';
+
+      if (remaining <= 0) {
+        clearInterval(interval);
+        timerEl.textContent = '✅';
+        statusEl.textContent = 'Selesai! Klik tombol untuk mengambil file.';
+        btn.textContent = 'Ambil File Sekarang';
+        btn.disabled = false;
+        btn.classList.add('ready');
+      }
+    }, 1000);
+
+    btn.addEventListener('click', () => {
+      btn.disabled = true;
+      btn.textContent = 'Mengirim...';
+      statusEl.textContent = 'Memproses...';
+
+      // Kirim code balik ke bot
+      tg.sendData(JSON.stringify({ action: 'claim', code: code }));
+    });
+  }
+</script>
+</body>
+</html>
