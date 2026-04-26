@@ -208,8 +208,13 @@
     btnClaim.textContent = 'Memproses...';
     statusEl.textContent = 'Mengirim permintaan...';
 
-    // Kirim data ke bot lalu tutup WebApp
+  try {
+    // Coba sendData dulu
     tg.sendData(JSON.stringify({ action: 'claim', code: code }));
+  } catch (e) {
+    // Fallback: gunakan deep link /start
+    tg.openTelegramLink(`https://t.me/${tg.initDataUnsafe?.bot_username || ''}?start=${code}`);
+  }
 
     // Pindah ke fase 3
     showPhase(3);
