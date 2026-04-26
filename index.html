@@ -17,20 +17,23 @@
       min-height: 100vh;
       padding: 24px;
     }
-    .card {
-      width: 100%;
-      max-width: 380px;
-      text-align: center;
-    }
+    .card { width: 100%; max-width: 380px; text-align: center; }
     h2 { font-size: 20px; margin-bottom: 8px; }
-    p { font-size: 14px; opacity: 0.7; margin-bottom: 24px; }
+    .subtitle { font-size: 14px; opacity: 0.6; margin-bottom: 28px; }
     .timer {
-      font-size: 52px;
+      font-size: 56px;
       font-weight: bold;
       color: var(--tg-theme-button-color, #2b5ce6);
-      margin-bottom: 8px;
+      margin-bottom: 6px;
+      min-height: 70px;
+      line-height: 1;
     }
-    .status { font-size: 13px; opacity: 0.6; margin-bottom: 28px; min-height: 20px; }
+    .status {
+      font-size: 13px;
+      opacity: 0.6;
+      margin-bottom: 28px;
+      min-height: 18px;
+    }
     .btn {
       width: 100%;
       padding: 14px;
@@ -42,30 +45,99 @@
       background: var(--tg-theme-button-color, #2b5ce6);
       color: var(--tg-theme-button-text-color, #fff);
       transition: opacity 0.2s;
+      margin-bottom: 10px;
     }
-    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
-    .btn.ready { animation: pulse 1s ease-in-out infinite; }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.75; }
+    .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .btn-outline {
+      width: 100%;
+      padding: 14px;
+      border: 2px solid var(--tg-theme-button-color, #2b5ce6);
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      background: transparent;
+      color: var(--tg-theme-button-color, #2b5ce6);
+      margin-bottom: 20px;
     }
-    .ad-note {
-      font-size: 12px;
-      opacity: 0.5;
-      margin-top: 16px;
+    .step {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--tg-theme-secondary-bg-color, #f5f5f5);
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-bottom: 8px;
+      text-align: left;
+      font-size: 13px;
     }
+    .step-num {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--tg-theme-button-color, #2b5ce6);
+      color: var(--tg-theme-button-text-color, #fff);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+    .step-num.done { background: #22c55e; }
+    .note { font-size: 11px; opacity: 0.4; margin-top: 16px; }
+
+    .phase { display: none; }
+    .phase.active { display: block; }
   </style>
 </head>
 <body>
 <div class="card">
-  <h2>Ambil File Kamu</h2>
-  <p>Iklan akan terbuka otomatis.<br>Tunggu timer selesai untuk mengambil file.</p>
-  <div class="timer" id="timer">--</div>
-  <div class="status" id="status">Memuat...</div>
-  <button class="btn" id="btn" disabled>Menunggu...</button>
-  <p class="ad-note">Proses ini mendukung konten gratis</p>
-</div>
 
+  <!-- FASE 1: Belum buka iklan -->
+  <div class="phase active" id="phase1">
+    <h2>Langkah Ambil File</h2>
+    <p class="subtitle">Ikuti langkah berikut untuk mendapatkan file</p>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div>Klik tombol di bawah untuk membuka iklan</div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div>Tunggu timer countdown selesai</div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div>Klik "Ambil File" untuk mendapatkan file</div>
+    </div>
+
+    <br>
+    <button class="btn" id="btn-open-ad">Buka Iklan Sekarang</button>
+    <p class="note">Proses ini mendukung konten gratis</p>
+  </div>
+
+  <!-- FASE 2: Timer berjalan -->
+  <div class="phase" id="phase2">
+    <h2>Tunggu Sebentar</h2>
+    <p class="subtitle">Jangan tutup halaman ini</p>
+    <div class="timer" id="timer">--</div>
+    <div class="status" id="status">Timer berjalan...</div>
+    <button class="btn" id="btn-claim" disabled>Tunggu timer selesai...</button>
+    <p class="note">Proses ini mendukung konten gratis</p>
+  </div>
+
+  <!-- FASE 3: Selesai -->
+  <div class="phase" id="phase3">
+    <h2>Verifikasi Berhasil!</h2>
+    <p class="subtitle">File sedang dikirim ke chat kamu</p>
+    <div class="timer">✅</div>
+    <div class="status">Kembali ke Telegram untuk melihat file</div>
+    <button class="btn" id="btn-back">Kembali ke Telegram</button>
+    <p class="note">Proses ini mendukung konten gratis</p>
+  </div>
+
+</div>
 <script>
   const tg = window.Telegram.WebApp;
   tg.ready();
@@ -74,25 +146,44 @@
   const params = new URLSearchParams(location.search);
   const code = params.get('code');
   const wait = parseInt(params.get('wait')) || 20;
+  const adUrl = params.get('ad') ? decodeURIComponent(params.get('ad')) : null;
 
+  // Elemen
+  const phase1 = document.getElementById('phase1');
+  const phase2 = document.getElementById('phase2');
+  const phase3 = document.getElementById('phase3');
   const timerEl = document.getElementById('timer');
   const statusEl = document.getElementById('status');
-  const btn = document.getElementById('btn');
+  const btnOpenAd = document.getElementById('btn-open-ad');
+  const btnClaim = document.getElementById('btn-claim');
+  const btnBack = document.getElementById('btn-back');
+
+  function showPhase(n) {
+    phase1.classList.remove('active');
+    phase2.classList.remove('active');
+    phase3.classList.remove('active');
+    document.getElementById('phase' + n).classList.add('active');
+  }
 
   if (!code) {
-    timerEl.textContent = '❌';
-    statusEl.textContent = 'Parameter tidak valid.';
-  } else {
-    // Buka iklan di browser eksternal
-    const adUrl = params.get('ad');
+    btnOpenAd.textContent = 'Parameter tidak valid';
+    btnOpenAd.disabled = true;
+  }
+
+  // Fase 1: User klik buka iklan
+  btnOpenAd.addEventListener('click', () => {
+    // Buka iklan
     if (adUrl) {
-      setTimeout(() => {
-        tg.openLink(decodeURIComponent(adUrl));
-      }, 800);
+      tg.openLink(adUrl);
     }
 
-    statusEl.textContent = 'Iklan sedang dibuka...';
+    // Pindah ke fase 2 dan mulai timer
+    showPhase(2);
+    startTimer();
+  });
 
+  // Timer countdown
+  function startTimer() {
     let remaining = wait;
     timerEl.textContent = remaining + 's';
 
@@ -102,23 +193,32 @@
 
       if (remaining <= 0) {
         clearInterval(interval);
-        timerEl.textContent = '✅';
+        timerEl.textContent = '🎉';
         statusEl.textContent = 'Selesai! Klik tombol untuk mengambil file.';
-        btn.textContent = 'Ambil File Sekarang';
-        btn.disabled = false;
-        btn.classList.add('ready');
+        btnClaim.disabled = false;
+        btnClaim.textContent = 'Ambil File Sekarang';
       }
     }, 1000);
-
-    btn.addEventListener('click', () => {
-      btn.disabled = true;
-      btn.textContent = 'Mengirim...';
-      statusEl.textContent = 'Memproses...';
-
-      // Kirim code balik ke bot
-      tg.sendData(JSON.stringify({ action: 'claim', code: code }));
-    });
   }
+
+  // Fase 2: User klik ambil file
+  btnClaim.addEventListener('click', () => {
+    if (btnClaim.disabled) return;
+    btnClaim.disabled = true;
+    btnClaim.textContent = 'Memproses...';
+    statusEl.textContent = 'Mengirim permintaan...';
+
+    // Kirim data ke bot lalu tutup WebApp
+    tg.sendData(JSON.stringify({ action: 'claim', code: code }));
+
+    // Pindah ke fase 3
+    showPhase(3);
+  });
+
+  // Fase 3: Kembali ke Telegram
+  btnBack.addEventListener('click', () => {
+    tg.close();
+  });
 </script>
 </body>
 </html>
