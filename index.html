@@ -43,7 +43,6 @@
       line-height: 1.5;
     }
 
-    /* Steps */
     .steps {
       margin-bottom: 28px;
       text-align: left;
@@ -78,9 +77,6 @@
       margin-top: 1px;
     }
 
-    .step-num.done { background: #22c55e; }
-
-    /* Buttons */
     .btn {
       width: 100%;
       padding: 16px;
@@ -101,45 +97,8 @@
 
     .btn:active:not(:disabled) { transform: scale(0.98); }
     .btn:disabled { opacity: 0.35; cursor: not-allowed; }
-    .btn.green { background: #22c55e; }
-    .btn.gray  { background: #475569; }
+    .btn.gray { background: #475569; }
 
-    /* Timer */
-    .timer-wrap {
-      margin-bottom: 24px;
-    }
-
-    .timer {
-      font-size: 72px;
-      font-weight: 800;
-      color: #3b82f6;
-      line-height: 1;
-      margin-bottom: 8px;
-      letter-spacing: -3px;
-    }
-
-    .timer-label {
-      font-size: 13px;
-      color: #64748b;
-    }
-
-    .progress-wrap {
-      background: #1e293b;
-      border-radius: 999px;
-      height: 8px;
-      margin-bottom: 20px;
-      overflow: hidden;
-      border: 1px solid #334155;
-    }
-
-    .progress-bar {
-      height: 100%;
-      background: linear-gradient(90deg, #3b82f6, #60a5fa);
-      border-radius: 999px;
-      width: 0%;
-    }
-
-    /* Info box */
     .info-box {
       background: #1e293b;
       border: 1px solid #334155;
@@ -154,21 +113,6 @@
 
     .info-box strong { color: #f1f5f9; }
 
-    /* Error box */
-    .error-box {
-      background: #450a0a;
-      border: 1px solid #991b1b;
-      color: #fca5a5;
-      border-radius: 12px;
-      padding: 14px 16px;
-      font-size: 13px;
-      margin-bottom: 16px;
-      display: none;
-      text-align: left;
-      line-height: 1.5;
-    }
-
-    /* Loading spinner */
     .spinner {
       display: inline-block;
       width: 18px;
@@ -182,20 +126,6 @@
 
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* Success */
-    @keyframes popIn {
-      0%   { transform: scale(0.5); opacity: 0; }
-      80%  { transform: scale(1.1); }
-      100% { transform: scale(1); opacity: 1; }
-    }
-
-    .success-icon {
-      font-size: 72px;
-      margin-bottom: 12px;
-      display: block;
-      animation: popIn 0.4s ease forwards;
-    }
-
     .note {
       font-size: 11px;
       color: #475569;
@@ -203,17 +133,8 @@
       line-height: 1.5;
     }
 
-    /* Phase */
     .phase { display: none; }
     .phase.active { display: block; }
-
-    /* Status text */
-    .status {
-      font-size: 13px;
-      color: #64748b;
-      margin-bottom: 20px;
-      min-height: 18px;
-    }
   </style>
 </head>
 <body>
@@ -292,11 +213,9 @@
   const params = new URLSearchParams(location.search);
   const code   = params.get('code');
 
-  let botUsername  = '';
-  let adUrl        = '';
-  let waitSeconds  = 20;
-  let webappUrl    = '';
-  let backendUrl   = BACKEND_URL;
+  let botUsername = '';
+  let adUrl       = '';
+  let tgLink      = '';
 
   function showPhase(id) {
     document.querySelectorAll('.phase').forEach(el => el.classList.remove('active'));
@@ -316,18 +235,20 @@
     }
 
     try {
-      // Fetch info bot (username aktif, ad url, dll)
+      // Fetch info bot
       const botRes  = await fetch(`${BACKEND_URL}/botinfo`);
       const botInfo = await botRes.json();
 
-      botUsername = botInfo.username;
-      adUrl       = botInfo.ad_url    || '';
-      waitSeconds = botInfo.wait      || 20;
-      webappUrl   = botInfo.webapp_url || '';
-      backendUrl  = botInfo.backend_url || BACKEND_URL;
+      botUsername = botInfo.username || '';
+      adUrl       = botInfo.ad_url   || '';
 
-      // Fetch info link (jumlah file, status)
-      const linkRes  = await fetch(`${BACKEND_URL}/linkinfo?code=${code}`);
+      if (!botUsername) {
+        showError('Konfigurasi bot tidak ditemukan. Hubungi admin.');
+        return;
+      }
+
+      // Fetch info link
+      const linkRes  = await fetch(`${BACKEND_URL}/linkinfo?code=${encodeURIComponent(code)}`);
       const linkInfo = await linkRes.json();
 
       if (!linkInfo.ok) {
@@ -346,6 +267,9 @@
         `<strong>📦 ${fileLabel} siap diakses</strong><br>` +
         `Ikuti langkah di bawah untuk mengambil file ke Telegram kamu.`;
 
+      // Siapkan deep link Telegram
+      tgLink = `https://t.me/${botUsername}?start=${encodeURIComponent(code)}`;
+
       showPhase('phase1');
     } catch (err) {
       console.error('Init error:', err);
@@ -353,7 +277,7 @@
     }
   }
 
-  // ── Tombol utama: buka iklan + redirect ke bot ─────────────────────────
+  // ── Tombol utama: buka iklan + buat session + redirect ke bot ──────────
   document.getElementById('btn-start').addEventListener('click', async () => {
     const btn = document.getElementById('btn-start');
     btn.disabled = true;
@@ -364,11 +288,13 @@
       window.open(adUrl, '_blank');
     }
 
-    // Redirect ke bot Telegram dengan deep link
-    const tgLink = `https://t.me/${botUsername}?start=${code}`;
+    // FIX: Buat session di backend sebelum redirect ke bot
+    // Kita tidak punya user_id di landing page (user belum buka Telegram)
+    // Session akan dibuat ulang oleh bot saat /start dipanggil
+    // Jadi bagian ini hanya redirect, session dibuat di bot side
+
     document.getElementById('btn-open-tg').setAttribute('data-tg', tgLink);
 
-    // Delay sedikit lalu arahkan ke Telegram
     setTimeout(() => {
       window.location.href = tgLink;
       showPhase('phase2');
@@ -377,9 +303,8 @@
 
   // ── Tombol buka Telegram manual ────────────────────────────────────────
   document.getElementById('btn-open-tg').addEventListener('click', () => {
-    const tgLink = document.getElementById('btn-open-tg').getAttribute('data-tg') ||
-                   `https://t.me/${botUsername}?start=${code}`;
-    window.location.href = tgLink;
+    const link = document.getElementById('btn-open-tg').getAttribute('data-tg') || tgLink;
+    window.location.href = link;
   });
 
   // ── Tombol ulangi ──────────────────────────────────────────────────────
